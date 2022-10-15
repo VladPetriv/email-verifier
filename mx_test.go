@@ -6,18 +6,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckMxOK(t *testing.T) {
-	domain := "github.com"
+func TestCheckMx(t *testing.T) {
+	t.Parallel()
 
-	mx, err := verifier.CheckMX(domain)
-	assert.NoError(t, err)
-	assert.True(t, mx.HasMXRecord)
-}
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{
+			name:  "Email with mx",
+			input: "github.com",
+		},
+		{
+			name:    "Email with mx",
+			input:   "githubexists.com",
+			wantErr: true,
+		},
+	}
 
-func TestCheckNoMxOK(t *testing.T) {
-	domain := "githubexists.com"
+	for _, tt := range tests {
+		tt := tt
 
-	mx, err := verifier.CheckMX(domain)
-	assert.Nil(t, mx)
-	assert.Error(t, err, ErrNoSuchHost)
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := verifier.CheckMX(tt.input)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, got)
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, got.HasMXRecord)
+			}
+		})
+	}
 }
