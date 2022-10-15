@@ -7,46 +7,119 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParseDomainOK(t *testing.T) {
-	domain := "yahoo.com.is"
-	ret := parsedDomain(domain)
-	expected := "com.is"
-	assert.Equal(t, expected, ret)
-}
+func TestParseDomain(t *testing.T) {
+	t.Parallel()
 
-func TestParseDomainWithUpperCase(t *testing.T) {
-	domain := "YaHoO.cOm"
-	ret := parsedDomain(domain)
-	expected := "yahoo.com"
-	assert.Equal(t, expected, ret)
-}
+	tests := []struct {
+		name           string
+		input          string
+		expectedDomain string
+	}{
+		{
+			name:           "Ok",
+			input:          "yahoo.com.is",
+			expectedDomain: "com.is",
+		},
+		{
+			name:           "With upper case",
+			input:          "YaHoO.cOm",
+			expectedDomain: "yahoo.com",
+		},
+		{name: "Make sense", input: "t.example.yahoo.com",
+			expectedDomain: "yahoo.com",
+		},
+		{
+			name:           "Empty string",
+			input:          "",
+			expectedDomain: "",
+		},
+	}
 
-func TestParseDomainOK_MakeSense(t *testing.T) {
-	domain := "t.example.yahoo.com"
-	ret := parsedDomain(domain)
-	expected := "yahoo.com"
-	assert.Equal(t, expected, ret)
-}
+	for _, tt := range tests {
+		tt := tt
 
-func TestParseDomain_emptyString(t *testing.T) {
-	domain := ""
-	ret := parsedDomain(domain)
-	expected := ""
-	assert.Equal(t, expected, ret)
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := parsedDomain(tt.input)
+			assert.Equal(t, tt.expectedDomain, got)
+		})
+	}
 }
 
 func TestDomainToASCII(t *testing.T) {
-	domain := "testingΣ✪✯☭➳卐.org"
-	ret := domainToASCII(domain)
-	expected := "xn--testing-0if2960fjccubz8h9z13a.org"
-	assert.Equal(t, expected, ret)
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		input          string
+		expectedResult string
+	}{
+		{
+			name:           "Ok",
+			input:          "testingΣ✪✯☭➳卐.org",
+			expectedResult: "xn--testing-0if2960fjccubz8h9z13a.org",
+		},
+		{
+			name:           "With normal domain",
+			input:          "testing.org",
+			expectedResult: "testing.org",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := domainToASCII(tt.input)
+			assert.Equal(t, tt.expectedResult, got)
+		})
+	}
 }
 
-func TestDomainToASCII_NormalDomain(t *testing.T) {
-	domain := "testing.org"
-	ret := domainToASCII(domain)
-	expected := "testing.org"
-	assert.Equal(t, expected, ret)
+func TestSplitDomain(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		input          string
+		expectedResult [2]string
+	}{
+		{
+			name:           "Ok",
+			input:          "aftership.com",
+			expectedResult: [2]string{"aftership", "com"},
+		},
+		{
+			name:           "domain with NoSLD",
+			input:          "com",
+			expectedResult: [2]string{"", "com"},
+		},
+		{
+			name:           "domain with nil string",
+			input:          "",
+			expectedResult: [2]string{"", ""},
+		},
+		{
+			name:           "domain with sub domain",
+			input:          "develop.aftership.com",
+			expectedResult: [2]string{"aftership", "com"},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			sld, tld := splitDomain(tt.input)
+			assert.Equal(t, tt.expectedResult[0], sld)
+			assert.Equal(t, tt.expectedResult[1], tld)
+		})
+	}
 }
 
 func TestCallJobFuncWithParams_NoOutput(t *testing.T) {
@@ -71,32 +144,4 @@ func TestCallJobFuncWithWrongFunc(t *testing.T) {
 	f := 3
 	ret := callJobFuncWithParams(f, nil)
 	assert.Nil(t, ret)
-}
-
-func TestSplitDomainNoSLD(t *testing.T) {
-	domain := "com"
-	sld, tld := splitDomain(domain)
-	assert.Equal(t, sld, "")
-	assert.Equal(t, tld, domain)
-}
-
-func TestSplitDomainOK(t *testing.T) {
-	domain := "aftership.com"
-	sld, tld := splitDomain(domain)
-	assert.Equal(t, sld, "aftership")
-	assert.Equal(t, tld, "com")
-}
-
-func TestSplitDomainNilString(t *testing.T) {
-	domain := ""
-	sld, tld := splitDomain(domain)
-	assert.Equal(t, sld, "")
-	assert.Equal(t, tld, "")
-}
-
-func TestSplitDomainSubDomain(t *testing.T) {
-	domain := "develop.aftership.com"
-	sld, tld := splitDomain(domain)
-	assert.Equal(t, sld, "aftership")
-	assert.Equal(t, tld, "com")
 }
