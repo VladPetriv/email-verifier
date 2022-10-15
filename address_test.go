@@ -4,30 +4,37 @@ import (
 	"testing"
 )
 
-var (
-	samples = []struct {
-		mail   string
+func TestCheckAddressSyntax(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		email  string
 		format bool
 	}{
-		{mail: "example@domain.com", format: true},
-		{mail: "support@yahoo.com", format: true},
-		{mail: " jerry@gmail.com", format: false},
-		{mail: "tool@163.com", format: true},
-		{mail: "😀@gmail.com", format: false},
-		{mail: "user@gma3il.com", format: true},
-		{mail: "a_b@github.com", format: true},
-		{mail: "abc@доменное.com", format: true},
+		{email: "example@domain.com", format: true},
+		{email: "support@yahoo.com", format: true},
+		{email: " jerry@gmail.com", format: false},
+		{email: "tool@163.com", format: true},
+		{email: "😀@gmail.com", format: false},
+		{email: "user@gma3il.com", format: true},
+		{email: "a_b@github.com", format: true},
+		{email: "abc@доменное.com", format: true},
 	}
-)
 
-func TestCheckAddressSyntax(t *testing.T) {
-	for _, s := range samples {
-		address := verifier.ParseAddress(s.mail)
-		if !address.Valid && s.format == true {
-			t.Errorf(`"%s" check failed with an unexpected error`, s.mail)
-		}
-		if address.Valid && s.format == false {
-			t.Errorf(`"%s" => incorrect email address`, s.mail)
-		}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run("Validate email format", func(t *testing.T) {
+			t.Parallel()
+
+			address := verifier.ParseAddress(tt.email)
+			if !address.Valid && tt.format == true {
+				t.Errorf(`"%s" check failed with an unexpected error`, tt.email)
+			}
+
+			if address.Valid && tt.format == false {
+				t.Errorf(`"%s" => incorrect email address`, tt.email)
+			}
+		})
 	}
 }
