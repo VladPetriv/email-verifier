@@ -7,170 +7,121 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse550RCPTError(t *testing.T) {
-	err := errors.New("550 This mailbox does not exist")
-	le := ParseSMTPError(err)
-	assert.Equal(t, ErrServerUnavailable, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
+func TestParseErrors(t *testing.T) {
+	t.Parallel()
 
-func TestParse550BlockedRCPTError(t *testing.T) {
-	err := errors.New("550 spamhaus")
-	le := ParseSMTPError(err)
-	assert.Equal(t, ErrBlocked, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
+	tests := []struct {
+		name           string
+		inputErr       error
+		expectedErrMsg string
+		expectedNil    bool
+	}{
+		{
+			name:           "Parse 550RCPTError",
+			inputErr:       errors.New("550 This mailbox does not exist"),
+			expectedErrMsg: ErrServerUnavailable,
+		},
+		{name: "Parse 550BlockedRCPTError", inputErr: errors.New("550 spamhaus"), expectedErrMsg: ErrBlocked},
+		{
+			name:           "Parse ConnectMailExchangerError",
+			inputErr:       errors.New("Timeout connecting to mail-exchanger"),
+			expectedErrMsg: ErrTimeout,
+		},
+		{
+			name: "Parse NoMxRecordsFoundError", inputErr: errors.New("No MX records found"), expectedErrMsg: "No MX records found"},
+		{
+			name:           "Parse FullInBoxError",
+			inputErr:       errors.New("452 full Inbox"),
+			expectedErrMsg: ErrFullInbox,
+		},
+		{
+			name:           "Parse DailSMTPServerError",
+			inputErr:       errors.New("Unexpected response dialing SMTP server"),
+			expectedErrMsg: "Unexpected response dialing SMTP server",
+		},
+		{
+			name:           "Parse Error_Code550",
+			inputErr:       errors.New("550"),
+			expectedErrMsg: ErrServerUnavailable,
+		},
+		{
+			name:           "Parse Error_Code400_Nil",
+			inputErr:       errors.New("400"),
+			expectedErrMsg: "",
+			expectedNil:    true,
+		},
+		{
+			name:           "Parse ParseError_Code401",
+			inputErr:       errors.New("401"),
+			expectedErrMsg: "401",
+		},
+		{
+			name:           "Parse Error_Code421",
+			inputErr:       errors.New("421"),
+			expectedErrMsg: ErrTryAgainLater,
+		},
+		{
+			name:           "Parse Error_Code450",
+			inputErr:       errors.New("450"),
+			expectedErrMsg: ErrMailboxBusy,
+		},
+		{
+			name:           "Parse Error_Code451",
+			inputErr:       errors.New("451"),
+			expectedErrMsg: ErrExceededMessagingLimits,
+		},
+		{
+			name:           "Parse Error_Code452",
+			inputErr:       errors.New("452"),
+			expectedErrMsg: ErrTooManyRCPT,
+		},
+		{
+			name:           "Parse Error_Code503",
+			inputErr:       errors.New("503"),
+			expectedErrMsg: ErrNeedMAILBeforeRCPT,
+		},
+		{
+			name:           "Parse Error_Code551",
+			inputErr:       errors.New("551"),
+			expectedErrMsg: ErrRCPTHasMoved,
+		},
+		{
+			name:           "Parse Error_Code552",
+			inputErr:       errors.New("552"),
+			expectedErrMsg: ErrFullInbox,
+		},
+		{
+			name:           "Parse Error_Code553",
+			inputErr:       errors.New("553"),
+			expectedErrMsg: ErrNoRelay,
+		},
+		{
+			name:           "Parse Error_Code554",
+			inputErr:       errors.New("554"),
+			expectedErrMsg: ErrNotAllowed,
+		},
+		{
+			name:           "Parse Error_basicErr_timeout",
+			inputErr:       errors.New("559 timeout"),
+			expectedErrMsg: ErrTimeout,
+		},
+		{
+			name:           "Parse Error_basicErr_blocked",
+			inputErr:       errors.New("559 blocked"),
+			expectedErrMsg: ErrBlocked,
+		},
+	}
 
-func TestParseConnectMailExchangerError(t *testing.T) {
-	err := errors.New("Timeout connecting to mail-exchanger")
-	le := ParseSMTPError(err)
-	assert.Equal(t, ErrTimeout, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
+	for _, tt := range tests {
+		tt := tt
 
-func TestParseNoMxRecordsFoundError(t *testing.T) {
-	errStr := "No MX records found"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-	assert.Equal(t, &LookupError{Details: errStr, Message: errStr}, le)
-}
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-func TestParseFullInBoxError(t *testing.T) {
-	errStr := "452 full Inbox"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrFullInbox, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseDailSMTPServerError(t *testing.T) {
-	errStr := "Unexpected response dialing SMTP server"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-	assert.Equal(t, &LookupError{Details: errStr, Message: errStr}, le)
-}
-
-func TestParseError_Code550(t *testing.T) {
-	errStr := "550"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrServerUnavailable, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code400_Nil(t *testing.T) {
-	errStr := "400"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, (*LookupError)(nil), le)
-}
-
-func TestParseError_Code401(t *testing.T) {
-	errStr := "401"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, &LookupError{Details: errStr, Message: errStr}, le)
-}
-
-func TestParseError_Code421(t *testing.T) {
-	errStr := "421"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrTryAgainLater, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code450(t *testing.T) {
-	errStr := "450"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrMailboxBusy, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code451(t *testing.T) {
-	errStr := "451"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrExceededMessagingLimits, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code452(t *testing.T) {
-	errStr := "452"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrTooManyRCPT, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code503(t *testing.T) {
-	errStr := "503"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrNeedMAILBeforeRCPT, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code551(t *testing.T) {
-	errStr := "551"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrRCPTHasMoved, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code552(t *testing.T) {
-	errStr := "552"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrFullInbox, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code553(t *testing.T) {
-	errStr := "553"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrNoRelay, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_Code554(t *testing.T) {
-	errStr := "554"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrNotAllowed, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_basicErr_timeout(t *testing.T) {
-	errStr := "559 timeout"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrTimeout, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
-}
-
-func TestParseError_basicErr_blocked(t *testing.T) {
-	errStr := "559 blocked"
-	err := errors.New(errStr)
-	le := ParseSMTPError(err)
-
-	assert.Equal(t, ErrBlocked, le.Message)
-	assert.Equal(t, err.Error(), le.Details)
+			got := ParseSMTPError(tt.inputErr)
+			if !tt.expectedNil {
+				assert.Equal(t, tt.expectedErrMsg, got.Message)
+			}
+		})
+	}
 }
