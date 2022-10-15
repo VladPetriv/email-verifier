@@ -6,20 +6,44 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckGravatarOK(t *testing.T) {
-	email := "alex@pagerduty.com"
+func TestCheckGravatar(t *testing.T) {
+	t.Parallel()
 
-	gravatar, err := verifier.CheckGravatar(email)
-	assert.NoError(t, err)
-	assert.True(t, gravatar.HasGravatar)
-	assert.NotEmpty(t, gravatar.GravatarUrl)
-}
+	tests := []struct {
+		name             string
+		input            string
+		expectedResult   *Gravatar
+		shouldBePositive bool
+	}{
+		{
+			name:             "Email with gravatar",
+			input:            "alex@pagerduty.com",
+			expectedResult:   &Gravatar{HasGravatar: true, GravatarUrl: "not empty"},
+			shouldBePositive: true,
+		},
+		{
+			name:           "Email without gravatar",
+			input:          "MyemailaddressHasNoGravatar@example.com",
+			expectedResult: &Gravatar{HasGravatar: false},
+		},
+	}
 
-func TestCheckGravatarFailed(t *testing.T) {
-	email := "MyemailaddressHasNoGravatar@example.com"
+	for _, tt := range tests {
+		tt := tt
 
-	gravatar, err := verifier.CheckGravatar(email)
-	assert.NoError(t, err)
-	assert.False(t, gravatar.HasGravatar)
-	assert.Empty(t, gravatar.GravatarUrl)
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := verifier.CheckGravatar(tt.input)
+			assert.NoError(t, err)
+
+			if tt.shouldBePositive {
+				assert.True(t, got.HasGravatar)
+				assert.NotEmpty(t, got.GravatarUrl)
+			} else {
+				assert.False(t, got.HasGravatar)
+				assert.Empty(t, got.GravatarUrl)
+			}
+		})
+	}
 }
