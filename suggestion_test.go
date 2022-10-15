@@ -6,44 +6,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSuggestDomainOK_HitExactDomain(t *testing.T) {
-	domain := "gmail.com"
+func TestSuggeestDomain(t *testing.T) {
+	t.Parallel()
 
-	ret := verifier.SuggestDomain(domain)
-	assert.Equal(t, "", ret)
-}
+	tests := []struct {
+		name           string
+		input          string
+		expectedDomain string
+	}{
+		{
+			name:           "DomainOK_HitExactDomain",
+			input:          "gmail.com",
+			expectedDomain: "",
+		},
+		{
+			name:           "DomainOK_NullString",
+			input:          "",
+			expectedDomain: "",
+		},
+		{
+			name:           "DomainOK_SimilarDomain1",
+			input:          "gmaii.com",
+			expectedDomain: "gmail.com",
+		},
+		{
+			name:           "DomainOK_SimilarDomain2",
+			input:          "gmai.com",
+			expectedDomain: "gmail.com",
+		},
+		{
+			name:           "DomainOK_TLD",
+			input:          "gmail.edd",
+			expectedDomain: "gmail.edu",
+		},
+		{
+			name:           "DomainOK_SLD",
+			input:          "homail.aftership",
+			expectedDomain: "hotmail.aftership",
+		},
+	}
 
-func TestSuggestDomainOK_NullString(t *testing.T) {
-	domain := ""
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	ret := verifier.SuggestDomain(domain)
-	assert.Equal(t, "", ret)
-}
+			got := verifier.SuggestDomain(tt.input)
 
-func TestSuggestDomainOK_SimilarDomain1(t *testing.T) {
-	domain := "gmaii.com"
-
-	ret := verifier.SuggestDomain(domain)
-	assert.Equal(t, "gmail.com", ret)
-}
-
-func TestSuggestDomainOK_SimilarDomain2(t *testing.T) {
-	domain := "gmai.com"
-
-	ret := verifier.SuggestDomain(domain)
-	assert.Equal(t, "gmail.com", ret)
-}
-
-func TestSuggestDomainOK_TLD(t *testing.T) {
-	domain := "gmail.edd"
-
-	ret := verifier.SuggestDomain(domain)
-	assert.Equal(t, "gmail.edu", ret)
-}
-
-func TestSuggestDomainOK_SLD(t *testing.T) {
-	domain := "homail.aftership"
-
-	ret := verifier.SuggestDomain(domain)
-	assert.Equal(t, "hotmail.aftership", ret)
+			assert.Equal(t, tt.expectedDomain, got)
+		})
+	}
 }
