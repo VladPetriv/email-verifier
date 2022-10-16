@@ -8,44 +8,98 @@ import (
 
 var verifier = NewVerifier().EnableSMTPCheck()
 
-func TestIsFreeDomain_True(t *testing.T) {
-	domain := "yahoo.com"
+func TestIsFreeDomain(t *testing.T) {
+	t.Parallel()
 
-	isFreeDomain := verifier.IsFreeDomain(domain)
-	assert.True(t, isFreeDomain)
+	tests := []struct {
+		name           string
+		input          string
+		expectedResult bool
+	}{
+		{
+			name:           "free domain",
+			input:          "yahoo.com",
+			expectedResult: true,
+		},
+		{
+			name:           "not free domain",
+			input:          "github.com.",
+			expectedResult: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := verifier.IsFreeDomain(tt.input)
+			assert.Equal(t, tt.expectedResult, got)
+		})
+	}
 }
 
-func TestCheckNotFreeDomain_False(t *testing.T) {
-	domain := "github.com"
+func TestIsDisposableDomain(t *testing.T) {
+	t.Parallel()
 
-	isFreeDomain := verifier.IsFreeDomain(domain)
-	assert.False(t, isFreeDomain)
+	tests := []struct {
+		name           string
+		input          string
+		expectedResult bool
+	}{
+		{
+			name:           "disposable domain",
+			input:          "dbbd8.club",
+			expectedResult: true,
+		},
+		{
+			name:           "not disposable domain",
+			input:          "gmail.com",
+			expectedResult: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := verifier.IsDisposable(tt.input)
+			assert.Equal(t, tt.expectedResult, got)
+		})
+	}
 }
 
-func TestIsDisposableDomain_True(t *testing.T) {
-	domain := "dbbd8.club"
+func TestIsRoleAccount(t *testing.T) {
+	t.Parallel()
 
-	isDisposable := verifier.IsDisposable(domain)
-	assert.True(t, isDisposable)
-}
+	tests := []struct {
+		name           string
+		input          string
+		expectedResult bool
+	}{
+		{
+			name:           "role account",
+			input:          "administrator",
+			expectedResult: true,
+		},
+		{
+			name:           "not role account",
+			input:          "normal_user",
+			expectedResult: false,
+		},
+	}
 
-func TestIsDisposableDomain_False(t *testing.T) {
-	domain := "gmail.com"
+	for _, tt := range tests {
+		tt := tt
 
-	isDisposable := verifier.IsDisposable(domain)
-	assert.False(t, isDisposable)
-}
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-func TestIsRoleAccount_True(t *testing.T) {
-	username := "administrator"
-
-	isRoleAccount := verifier.IsRoleAccount(username)
-	assert.True(t, isRoleAccount)
-}
-
-func TestIsRoleAccount_False(t *testing.T) {
-	username := "normal_user"
-
-	isRoleAccount := verifier.IsRoleAccount(username)
-	assert.False(t, isRoleAccount)
+			got := verifier.IsRoleAccount(tt.input)
+			assert.Equal(t, tt.expectedResult, got)
+		})
+	}
 }
