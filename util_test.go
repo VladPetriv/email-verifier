@@ -25,7 +25,9 @@ func TestParseDomain(t *testing.T) {
 			input:          "YaHoO.cOm",
 			expectedDomain: "yahoo.com",
 		},
-		{name: "Make sense", input: "t.example.yahoo.com",
+		{
+			name:           "Make sense",
+			input:          "t.example.yahoo.com",
 			expectedDomain: "yahoo.com",
 		},
 		{

@@ -21,14 +21,21 @@ func TestParseErrors(t *testing.T) {
 			inputErr:       errors.New("550 This mailbox does not exist"),
 			expectedErrMsg: ErrServerUnavailable,
 		},
-		{name: "Parse 550BlockedRCPTError", inputErr: errors.New("550 spamhaus"), expectedErrMsg: ErrBlocked},
+		{
+			name:           "Parse 550BlockedRCPTError",
+			inputErr:       errors.New("550 spamhaus"),
+			expectedErrMsg: ErrBlocked,
+		},
 		{
 			name:           "Parse ConnectMailExchangerError",
 			inputErr:       errors.New("Timeout connecting to mail-exchanger"),
 			expectedErrMsg: ErrTimeout,
 		},
 		{
-			name: "Parse NoMxRecordsFoundError", inputErr: errors.New("No MX records found"), expectedErrMsg: "No MX records found"},
+			name:           "Parse NoMxRecordsFoundError",
+			inputErr:       errors.New("No MX records found"),
+			expectedErrMsg: "No MX records found",
+		},
 		{
 			name:           "Parse FullInBoxError",
 			inputErr:       errors.New("452 full Inbox"),
